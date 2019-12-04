@@ -55,6 +55,11 @@
 								</option>
 								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="gnu.cpp.link.option.userobjs.1729401127" name="Other objects" superClass="gnu.cpp.link.option.userobjs" useByScannerDiscovery="false" valueType="userObjs">
 									<listOptionValue builtIn="false" value="/soft/hadoop-2.9.1/lib/native/libhdfs.so"/>
+									<listOptionValue builtIn="false" value="/soft/hadoop-2.9.1/lib/native/libhadoop.a"/>
+									<listOptionValue builtIn="false" value="/soft/hadoop-2.9.1/lib/native/libhadooppipes.a"/>
+									<listOptionValue builtIn="false" value="/soft/hadoop-2.9.1/lib/native/libhadooputils.a"/>
+									<listOptionValue builtIn="false" value="/soft/hadoop-2.9.1/lib/native/libhdfs.so.0.0.0"/>
+									<listOptionValue builtIn="false" value="/soft/hadoop-2.9.1/lib/native/libhadoop.so"/>
 								</option>
 								<option id="gnu.cpp.link.option.pthread.183382452" name="Support for pthread (-pthread)" superClass="gnu.cpp.link.option.pthread" useByScannerDiscovery="false" value="true" valueType="boolean"/>
 								<option id="gnu.cpp.link.option.flags.1272629584" name="Linker flags" superClass="gnu.cpp.link.option.flags" useByScannerDiscovery="false" value="-fPIC" valueType="string"/>
