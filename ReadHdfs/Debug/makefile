@@ -43,7 +43,7 @@ all: ReadHdfs
 ReadHdfs: $(OBJS) $(USER_OBJS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: GCC C++ Linker'
-	g++ -L/soft/hadoop-2.9.1/lib/native -L/soft/jdk/lib -L/soft/jdk/jre/lib -L/soft/hadoop-2.9.1 -L/soft/jdk/jre/lib/amd64/server -o "ReadHdfs" $(OBJS) $(USER_OBJS) $(LIBS)
+	g++ -L/soft/hadoop-2.9.1/lib/native -L/usr/local/cuda/lib64 -L/data/006zzy/nsight-workspace/MMAforHDFS/Debug -L/usr/lib -L/soft/jdk/lib -L/soft/jdk/jre/lib -L/soft/hadoop-2.9.1 -L/soft/jdk/jre/lib/amd64/server -o "ReadHdfs" $(OBJS) $(USER_OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 

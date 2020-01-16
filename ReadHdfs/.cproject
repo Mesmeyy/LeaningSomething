@@ -25,6 +25,10 @@
 								<option defaultValue="gnu.cpp.compiler.debugging.level.max" id="gnu.cpp.compiler.exe.debug.option.debugging.level.2095069859" name="Debug Level" superClass="gnu.cpp.compiler.exe.debug.option.debugging.level" useByScannerDiscovery="false" valueType="enumerated"/>
 								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="gnu.cpp.compiler.option.include.paths.1582060467" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" useByScannerDiscovery="false" valueType="includePath">
 									<listOptionValue builtIn="false" value="/soft/hadoop-2.9.1/include"/>
+									<listOptionValue builtIn="false" value="/data/006zzy/nsight-workspace/MMAforHDFS"/>
+								</option>
+								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="gnu.cpp.compiler.option.include.files.69858131" name="Include files (-include)" superClass="gnu.cpp.compiler.option.include.files" useByScannerDiscovery="false" valueType="includeFiles">
+									<listOptionValue builtIn="false" value="/data/006zzy/nsight-workspace/MMAforHDFS/mmhdfs.hpp"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.240807852" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
@@ -37,11 +41,19 @@
 							<tool id="cdt.managedbuild.tool.gnu.cpp.linker.exe.debug.1637852189" name="GCC C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.exe.debug">
 								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="gnu.cpp.link.option.libs.563181784" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" useByScannerDiscovery="false" valueType="libs">
 									<listOptionValue builtIn="false" value="pthread"/>
+									<listOptionValue builtIn="false" value="cuda"/>
+									<listOptionValue builtIn="false" value="cudart"/>
+									<listOptionValue builtIn="false" value="cublas"/>
+									<listOptionValue builtIn="false" value="curand"/>
+									<listOptionValue builtIn="false" value="cudnn"/>
 									<listOptionValue builtIn="false" value="hdfs"/>
 									<listOptionValue builtIn="false" value="jvm"/>
 								</option>
 								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="gnu.cpp.link.option.paths.1594205231" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" useByScannerDiscovery="false" valueType="libPaths">
 									<listOptionValue builtIn="false" value="/soft/hadoop-2.9.1/lib/native"/>
+									<listOptionValue builtIn="false" value="/usr/local/cuda/lib64"/>
+									<listOptionValue builtIn="false" value="/data/006zzy/nsight-workspace/MMAforHDFS/Debug"/>
+									<listOptionValue builtIn="false" value="/usr/lib"/>
 									<listOptionValue builtIn="false" value="/soft/jdk/lib"/>
 									<listOptionValue builtIn="false" value="/soft/jdk/jre/lib"/>
 									<listOptionValue builtIn="false" value="/soft/hadoop-2.9.1"/>
@@ -49,6 +61,7 @@
 								</option>
 								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="gnu.cpp.link.option.userobjs.1133794989" name="Other objects" superClass="gnu.cpp.link.option.userobjs" useByScannerDiscovery="false" valueType="userObjs">
 									<listOptionValue builtIn="false" value="/soft/hadoop-2.9.1/lib/native/libhdfs.so"/>
+									<listOptionValue builtIn="false" value="/data/006zzy/nsight-workspace/MMAforHDFS/Debug/libMMAforHDFS.a"/>
 									<listOptionValue builtIn="false" value="/soft/hadoop-2.9.1/lib/native/libhdfs.so.0.0.0"/>
 									<listOptionValue builtIn="false" value="/soft/hadoop-2.9.1/lib/native/libhadoop.a"/>
 									<listOptionValue builtIn="false" value="/soft/hadoop-2.9.1/lib/native/libhadooppipes.a"/>
