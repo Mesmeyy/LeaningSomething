@@ -159,8 +159,10 @@ void D_K_Means::Reducer()
 bool D_K_Means::TempWrit()//将所有类的中心写入临时文件
 {
     double ERR=0.0;
-    //ofstream outfile;
-    //outfile.open("TempData.txt");
+    //TempCluster已经由各个slave计算并保存于文件，因此，这里使用读文件方式
+    for(int i = 0 ; i < Cluster_Num;i++){
+
+    }
     for(int i=0;i<Cluster_Num;i++)//将TempCluster的中心坐标复制到Cluster中，同时计算与上一次迭代的变化（取2范数的平方）
     {
         for(int j=0;j<Point_Dimension;j++)
@@ -169,16 +171,6 @@ bool D_K_Means::TempWrit()//将所有类的中心写入临时文件
             Cluster[i].Center[j]=TempCluster[i].Center[j];
         }
     }
-    /*
-    for(int i=0;i<Cluster_Num;i++)//将Cluster的中心坐标写入临时文件
-    {
-        for(int j=0;j<Point_Dimension;j++)
-        {
-            outfile<<Cluster[i].Center[j];
-            if(j!=Point_Dimension-1) outfile<<" ";
-            else outfile<<endl;
-        }
-    }*/
     for(int i = 0;i < Cluster_Num;i++){
         std::string number = std::to_string(i);
         std::string filename = "tempdata_";
