@@ -36,7 +36,7 @@ class D_K_Means
     public:
     bool ReadData();//读取初始数据
     void Init();//初始化K类的中心
-    void Mapper();
+    void Mapper(int i);
     void Combiner();
     void Reducer();
     bool TempWrit();//将一轮迭代结束后的结果写入临时文件
@@ -91,7 +91,7 @@ void D_K_Means::Init()//初始化K个类的中心
     std::cout <<"tempcenter choice ok..."<<std::endl;
 }
 
-void D_K_Means::Mapper()//求解每个类下的样本点
+void Mapper(int i)//求解每个类下的样本点
 {
     /*FILE *fp;
     if((fp=fopen("TempData.txt","r"))==NULL)
@@ -178,8 +178,8 @@ void D_K_Means::Reducer()
 bool D_K_Means::TempWrit()//将所有类的中心写入临时文件
 {
     double ERR=0.0;
-    ofstream outfile;
-    outfile.open("TempData.txt");
+    //ofstream outfile;
+    //outfile.open("TempData.txt");
     for(int i=0;i<Cluster_Num;i++)//将TempCluster的中心坐标复制到Cluster中，同时计算与上一次迭代的变化（取2范数的平方）
     {
         for(int j=0;j<Point_Dimension;j++)
@@ -188,6 +188,7 @@ bool D_K_Means::TempWrit()//将所有类的中心写入临时文件
             Cluster[i].Center[j]=TempCluster[i].Center[j];
         }
     }
+    /*
     for(int i=0;i<Cluster_Num;i++)//将Cluster的中心坐标写入临时文件
     {
         for(int j=0;j<Point_Dimension;j++)
@@ -196,9 +197,22 @@ bool D_K_Means::TempWrit()//将所有类的中心写入临时文件
             if(j!=Point_Dimension-1) outfile<<" ";
             else outfile<<endl;
         }
+    }*/
+    for(int i = 0;i < Cluster_Num;i++){
+        std::string number = std::to_string(i);
+        std::string filename = "tempdata_";
+        filename += number;
+        filename += ".txt";
+        ofstream outfile;
+        outfile.open(filename);
+        for(int j = 0;j < Point_Dimension;j++){
+            outfile << Cluster[i].Center[j];
+            if(j != Point_Dimension-1) outfile << " ";
+            else outfile << endl;
+        }
+        outfile.close();
     }
-    outfile.close();
-    std::cout<<"tempcenter write is ok..."<<std::endl;
+    std::cout<<"tempcenter files write is ok..."<<std::endl;
     if(ERR<0.1) return true;
     else return false;
 }
