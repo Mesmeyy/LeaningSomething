@@ -43,7 +43,8 @@ class S_Kmeans{
     bool ReadData();//读取全部的样本点
     int Mapper();//进行分片计算
     double Distance(int index);//根据样本下表计算该样本距离本类中心的距离
-    int Combiner();
+    int Combiner();//汇总该中心的各个维度总距离
+    int Reducer();//求该类各个维度的中心值
 };
 bool S_Kmeans::ReadData()
 {
@@ -85,7 +86,7 @@ int S_Kmeans::Mapper()
         }
         Slave_Acluster.Member[Slave_Acluster.Number++] = j;
     }
-
+    return 0;
 }
 
 double S_Kmeans::Distance(int i)
@@ -99,12 +100,30 @@ double S_Kmeans::Distance(int i)
 
 int S_Kmeans::Combiner()
 {
-    int id;
     memset(Tempcenter,0,sizeof(Tempcenter));
     for(int k = 0;k < Point_Dimension;k++){
         for(int j = 0 ;j < Slave_Acluster.Number;j++){
             Tempcenter[k] += Point[j][k];
         }
     }
+    return 0;
+}
+
+int S_Kmeans::Reducer()
+{
+    for(int i = 0;i < Point_Dimension;i++){
+        Tempcenter[i] /= Slave_Acluster.Number;
+    }
+    std::string filename = "tempresult_";
+    std::string number = std::to_string(Cluster_Index);
+    filename += number;
+    filename += ".txt";
+    ofstream outfile;
+    outfile.open(filename);
+    for(int i = 0;i < Point_Dimension;i++){
+        outfile << Tempcenter[i];
+        outfile << " ";
+    }
+    return 0;
 }
 
