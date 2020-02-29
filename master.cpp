@@ -91,14 +91,8 @@ void D_K_Means::Init()//初始化K个类的中心
     std::cout <<"tempcenter choice ok..."<<std::endl;
 }
 
-void Mapper(int i)//求解每个类下的样本点
+void D_K_Means::Mapper(int i)//求解每个类下的样本点
 {
-    /*FILE *fp;
-    if((fp=fopen("TempData.txt","r"))==NULL)
-    {
-        cout<<"Open TempData.txt Error!"<<endl;
-        exit(0);
-    }*/
     ifstream infile;
     infile.open("TempData.txt");
     double temp;
@@ -125,7 +119,6 @@ void Mapper(int i)//求解每个类下的样本点
         }
         Cluster[index].Member[Cluster[index].Number++]=i;
     }
-    //fclose(fp);
     infile.close();
 }
 
@@ -136,19 +129,7 @@ void D_K_Means::Combiner()
     {
         memset(TempCluster[i].Center,0,sizeof(TempCluster[i].Center));
     }
-#if 0 //以下代码错误
-    for(int i;i<Cluster_Num;i++)
-    {
-        for(int j=0;j<Cluster[i].Number;j++)
-        {
-            for(int k=0;k<Point_Dimension;k++)
-            {
-                //TempCluster[i].Center[j] += Point[Cluster[i].Member[j]][k];
-            }
-        }
-    }
-#endif
-    for(int i;i<Cluster_Num;i++) //对于每个聚类顶点，
+    for(int i;i<Cluster_Num;i++) //对于每个聚类顶点
     {
     	//计算聚类顶点的位置的和，即point(x1,x2,x3,...,xn)中的x1,x2等的值，等待reduce时计算平均值
     	//为什么现在不计算平均值，目的是为了分布式的开发，否则直接在函数结束前计算均值就可以
