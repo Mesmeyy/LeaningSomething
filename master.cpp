@@ -161,7 +161,15 @@ bool D_K_Means::TempWrit()//将所有类的中心写入临时文件
     double ERR=0.0;
     //TempCluster已经由各个slave计算并保存于文件，因此，这里使用读文件方式
     for(int i = 0 ; i < Cluster_Num;i++){
-
+        std::string filename = "tempresult_";
+        std::string number = std::to_string(i);
+        filename += number;
+        filename += ".txt";
+        ifstream infile;
+        infile.open(filename);
+        for(int j = 0;j < Point_Dimension;j++){
+            infile >>TempCluster[i].Center[j];
+        }
     }
     for(int i=0;i<Cluster_Num;i++)//将TempCluster的中心坐标复制到Cluster中，同时计算与上一次迭代的变化（取2范数的平方）
     {
@@ -192,26 +200,15 @@ bool D_K_Means::TempWrit()//将所有类的中心写入临时文件
 
 void D_K_Means::Write_Result()//输出结果
 {
-    /*(FILE *fp;
-    if((fp=fopen("Result.txt","w"))==NULL)
-    {
-        cout<<"Open Result.txt Error!"<<endl;
-        exit(0);
-    }*/
     ofstream outfile;
     outfile.open("Result.txt");
-    for(int i=0;i<Cluster_Num;i++)
-    {
-        cout<<"Cluster "<<i<<" : ";
-        sort(Cluster[i].Member,(Cluster[i].Member)+Cluster[i].Number);//类内序号排序，方便输出
-        for(int j=0;j<Cluster[i].Number;j++)
-        {
-            outfile<<Cluster[i].Member[j];
-            if(j!=Cluster[i].Number-1) outfile<<" ";
-            else outfile<<endl;
+    for(int i = 0;i < Cluster_Num;i++){
+        for(int j = 0;j < Point_Dimension;j++){
+            outfile << Cluster[i].Center[j];
+            outfile << " ";
         }
+        std::cout << std::endl;
     }
-    //fclose(fp);
     outfile.close();
 }
 
