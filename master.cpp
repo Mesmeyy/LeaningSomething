@@ -197,8 +197,3 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-/*分布式实现思路
-1 按照文件分片运行Mapper()和Combiner()
-2 在指定的几个机器上运行Reducer()，一个reduce计算一个或者多个聚类中心，得到新的聚类中心和ERR
-3 Reducer结果通过TempWrit返回到master节点，进行ERR汇总，然后下发，进行下一次迭代
-*/
