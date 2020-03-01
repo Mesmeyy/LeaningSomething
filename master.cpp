@@ -18,7 +18,7 @@ struct aCluster//类
     double Center[MAXD];//类的中心
     int Number;//类中包含的样本point数目
     int Member[MAXN];//类中包含的样本point的index
-    //double Err; 分布式再启用此变量
+    //double Err; 分布式再启用此变量,想着所有类公用一个Err
 };
 
 class D_K_Means
@@ -36,9 +36,6 @@ class D_K_Means
     public:
     bool ReadData();//读取初始数据
     int Init();//初始化K类的中心
-    int Mapper(int i);
-    int Combiner();
-    int  Reducer();
     bool TempWrit();//将一轮迭代结束后的结果写入临时文件
     int Write_Result();//输出结果
 
@@ -63,11 +60,11 @@ bool D_K_Means::ReadData()//读取数据
     infile >>Point_Dimension;
     infile >>Cluster_Num;
 
-    for(int i=0;i<Point_Num;i++)
+    for(int i = 0;i < Point_Num;i++)
     {
-        for(int j=0;j<Point_Dimension;j++)
+        for(int j = 0;j < Point_Dimension;j++)
         {
-            infile >>Point[i][j];//读取第i个样本点的第j个属性
+            infile >> Point[i][j];//读取第i个样本点的第j个属性
         }
     }
     infile.close();
@@ -79,100 +76,40 @@ bool D_K_Means::ReadData()//读取数据
 int D_K_Means::Init()//初始化K个类的中心
 {
     srand(time(NULL));//抛随机种子
-    for(int i=0;i<Cluster_Num;i++)
+    for(int i = 0;i < Cluster_Num;i++)
     {
-        int r=rand()%Point_Num;//随机选择所有样本点中的一个作为第i类的中心
+        int r = rand() % Point_Num;//随机选择所有样本点中的一个作为第i类的中心
         Cluster[i].Member[0]=r;
-        for(int j=0;j<Point_Dimension;j++)
+        for(int j = 0;j < Point_Dimension;j++)
         {
-            TempCluster[i].Center[j]=Point[r][j];
+            Cluster[i].Center[j] = Point[r][j];
         }
     }
-    std::cout <<"tempcenter choice ok..."<<std::endl;
+    std::cout <<"tempcenter choice is ok..."<<std::endl;
     return 0;
 }
 
-int D_K_Means::Mapper(int i)//求解每个类下的样本点
-{
-    ifstream infile;
-    infile.open("TempData.txt");
-    double temp;
-    for(int i=0;i<Cluster_Num;i++)//读取中心
-    {
-        Cluster[i].Number=0;
-        for(int j=0;j<Point_Dimension;j++)
-        {
-            infile>>temp;
-            Cluster[i].Center[j]=temp;
-        }
-    }
-    for(int i=0;i<Point_Num;i++)//重新计算所有类中的样本点
-    {
-        int index;
-        double dis=INF;
-        for(int j=0;j<Cluster_Num;j++)
-        {
-            if(Distance(i,j)<dis)
-            {
-                dis=Distance(i,j);
-                index=j;
-            }
-        }
-        Cluster[index].Member[Cluster[index].Number++]=i;
-    }
-    infile.close();
-    return 0;
-}
-
-int D_K_Means::Combiner()
-{
-    int id;
-    for(int i=0;i<Cluster_Num;i++)
-    {
-        memset(TempCluster[i].Center,0,sizeof(TempCluster[i].Center));
-    }
-    for(int i;i<Cluster_Num;i++) //对于每个聚类顶点
-    {
-    	//计算聚类顶点的位置的和，即point(x1,x2,x3,...,xn)中的x1,x2等的值，等待reduce时计算平均值
-    	//为什么现在不计算平均值，目的是为了分布式的开发，否则直接在函数结束前计算均值就可以
-    	for(int k=0;k<Point_Dimension;k++)//计算每个维度的数字和
-        {
-            for(int j=0;j<Cluster[i].Number;j++) //每个聚类顶点中包含的原始数据点 
-            {
-                TempCluster[i].Center[k] += Point[Cluster[i].Member[j]][k];
-            }
-        }
-    }
-    return 0;
-}
-
-
-int D_K_Means::Reducer()
-{
-    for(int i=0;i<Cluster_Num;i++)
-    {
-        for(int j=0;j<Point_Dimension;j++)
-        {
-            TempCluster[i].Center[j]/=Cluster[i].Number;
-        }
-    }
-    return 0;
-}
 
 //该函数只能在master上进行，用于计算误差，以便得到新的聚类中心，同时确定是否需要继续迭代,这块在master里面将来需要改动
 bool D_K_Means::TempWrit()//将所有类的中心写入临时文件
 {
     double ERR=0.0;
-    //TempCluster已经由各个slave计算并保存于文件，因此，这里使用读文件方式
+    //tempdata文件要么不存在，要么已经由各个slave计算并保存于文件，因此，这里使用读文件方式读取tempdata里面已经计算出来的最新的中心值
     for(int i = 0 ; i < Cluster_Num;i++){
-        std::string filename = "tempresult_";
+        std::string filename = "tempdata_";
         std::string number = std::to_string(i);
         filename += number;
         filename += ".txt";
         ifstream infile;
         infile.open(filename);
-        for(int j = 0;j < Point_Dimension;j++){
-            infile >>TempCluster[i].Center[j];
+        if(!infile){
+            std::cout << "tempdata_"<<i<<" not exist..."<<std::endl;
+            memset(TempCluster[i].Center,0,sizeof(TempCluster[i].Center));
+        }else{
+            std::cout << "tempdata_"<<i<<" exist"<<std::endl;
+            for(int j = 0;j < Point_Dimension;j++){
+                infile >> TempCluster[i].Center[j];
+            }
         }
     }
     for(int i=0;i<Cluster_Num;i++)//将TempCluster的中心坐标复制到Cluster中，同时计算与上一次迭代的变化（取2范数的平方）
@@ -198,7 +135,7 @@ bool D_K_Means::TempWrit()//将所有类的中心写入临时文件
         outfile.close();
     }
     std::cout<<"tempcenter files write is ok..."<<std::endl;
-    if(ERR<0.1) return true;
+    if(ERR < 0.1) return true;
     else return false;
 }
 
@@ -227,12 +164,14 @@ int FrameWork(D_K_Means *kmeans)
     int times = 1;
     kmeans->ReadData();
     int slave_number = kmeans -> Get_Cluster_Num();
+    std::cout << "master has cluster number = "<< slave_number<<std::endl;
     while(converged == false){
         for(int i = 0; i < slave_number;i++){
+            char* sourcefile = "sourcefile = data.txt";
             std:string number = std::to_string(i);
             char* index_param = "index ";
             strcat(index_param,number.c_str());
-            char *envp[] = {"sourcefile = dara.txt",index_param,NULL};
+            char *envp[] = {sourcefile,index_param,NULL};
             execle("./slave","slave",NULL,envp);
         }
         sleep(2);
