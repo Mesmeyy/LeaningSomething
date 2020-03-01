@@ -105,6 +105,11 @@ bool D_K_Means::TempWrit()//将所有类的中心写入临时文件
         if(!infile){
             std::cout << "tempdata_"<<i<<" not exist..."<<std::endl;
             memset(TempCluster[i].Center,0,sizeof(TempCluster[i].Center));
+            for(int j = 0;j < Point_Dimension;j++){
+                double temperr = TempCluster[i].Center[j] - Cluster[i].Center[j];
+                ERR += (TempCluster[i].Center[j]-Cluster[i].Center[j])*(TempCluster[i].Center[j]-Cluster[i].Center[j]);
+                goto Writetemp;
+            }
         }else{
             std::cout << "tempdata_"<<i<<" exist"<<std::endl;
             for(int j = 0;j < Point_Dimension;j++){
@@ -116,10 +121,12 @@ bool D_K_Means::TempWrit()//将所有类的中心写入临时文件
     {
         for(int j=0;j<Point_Dimension;j++)
         {
+            double temperr = TempCluster[i].Center[j]-Cluster[i].Center[j];
             ERR+=(TempCluster[i].Center[j]-Cluster[i].Center[j])*(TempCluster[i].Center[j]-Cluster[i].Center[j]);
             Cluster[i].Center[j]=TempCluster[i].Center[j];
         }
     }
+Writetemp:
     for(int i = 0;i < Cluster_Num;i++){
         std::string number = std::to_string(i);
         std::string filename = "tempdata_";
@@ -135,6 +142,7 @@ bool D_K_Means::TempWrit()//将所有类的中心写入临时文件
         outfile.close();
     }
     std::cout<<"tempcenter files write is ok..."<<std::endl;
+    std::cout << "Err = "<<ERR<<std::endl;
     if(ERR < 0.1) return true;
     else return false;
 }
@@ -167,12 +175,12 @@ int FrameWork(D_K_Means *kmeans)
     std::cout << "master has cluster number = "<< slave_number<<std::endl;
     while(converged == false){
         for(int i = 0; i < slave_number;i++){
-            char* sourcefile = "sourcefile = data.txt";
-            std:string number = std::to_string(i);
-            char* index_param = "index ";
-            strcat(index_param,number.c_str());
-            char *envp[] = {sourcefile,index_param,NULL};
-            execle("./slave","slave",NULL,envp);
+            std::string number = std::to_string(i);
+            const char* con_number = number.c_str();
+            std::string command = "./slave ";
+            command += number;
+            std::cout << i<< " slave start success..."<<std::endl;
+            system(command.c_str());
         }
         sleep(2);
         converged = kmeans -> TempWrit();
