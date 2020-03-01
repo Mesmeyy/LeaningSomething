@@ -59,8 +59,9 @@ bool S_Kmeans::ReadData()
         }
     }
     infile.close();
-    std::cout << "read tempdata for this slave is ok..."<<std::endl;
+    std::cout << "read tempdata form this slave is ok..."<<std::endl;
     //slave不需要把数据写入其中，但是他需要从属于它的tempdata里面读取center
+    return true;
 }
 
 int S_Kmeans::Mapper()
@@ -83,8 +84,8 @@ int S_Kmeans::Mapper()
         if(Distance(j) < dis){
             dis = Distance(j);
             index = Cluster_Index;
+            Slave_Acluster.Member[Slave_Acluster.Number++] = j;
         }
-        Slave_Acluster.Member[Slave_Acluster.Number++] = j;
     }
     return 0;
 }
@@ -114,7 +115,7 @@ int S_Kmeans::Reducer()
     for(int i = 0;i < Point_Dimension;i++){
         Tempcenter[i] /= Slave_Acluster.Number;
     }
-    std::string filename = "tempresult_";
+    std::string filename = "tempdata_";
     std::string number = std::to_string(Cluster_Index);
     filename += number;
     filename += ".txt";
@@ -127,3 +128,15 @@ int S_Kmeans::Reducer()
     return 0;
 }
 
+int main(int argc,char* argv[])
+{
+    for(int i = 0;i < argc;i++){
+        std::cout << "param "<< i << " = "<<argv[i] << std::endl;
+    }
+    S_Kmeans *skmeans = new S_Kmeans();
+    skmeans -> ReadData();
+    skmeans -> Mapper();
+    skmeans -> Combiner();
+    skmeans -> Reducer();
+    return 0;
+}
