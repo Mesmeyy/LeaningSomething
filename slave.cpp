@@ -102,7 +102,7 @@ int S_Kmeans::Mapper()
         infile >> temp;
         Slave_Acluster.Center[j] = temp;
     }
-    for(int i = 0;i < Point_Num;i++){//把符合条件的样本点加入该类
+    for(int i = 0;i < Point_Num;i++){
         int index = 0;
         double dis = INF;//这里有问题，不应该每次都是INF,应该记录每个point的最小值
         for(int j = 0;j < Cluster_Num;j++){
@@ -111,8 +111,10 @@ int S_Kmeans::Mapper()
                 index = j;
             }
         }
-        std::cout << "Point " << i << " belong to "<< Cluster_Index << " slave..."<<std::endl;
-        Slave_Acluster.Member[Slave_Acluster.Number++] = i;
+        if(index == Cluster_Index){//这里将来可以改成libprocess通信，直接将坐标发送给对应额cluster就不用再计算了,但是也还是会重复计算Distance
+            Slave_Acluster.Member[Slave_Acluster.Number++] = i;
+            std::cout << "Point " << i << " belong to " << Cluster_Index << " ... " << std::endl;
+        }
     }
     return 0;
 }
