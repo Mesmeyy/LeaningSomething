@@ -27,13 +27,16 @@ class D_K_Means
     //注意：数组较大时，尽量使用new，否则会出现Segmentation fault (core dumped)错误。
     double Point[MAXN][MAXD];//第i个样本点的第j个属性
     aCluster Cluster[MAXC];//所有类
-    int Cluster_Num;//类的个数
-    int Point_Num;//样本数
-    int Point_Dimension;//样本属性维度
+    //int Cluster_Num;//类的个数
+    //int Point_Num;//样本数
+    //int Point_Dimension;//样本属性维度
     aCluster TempCluster[MAXC];//临时存放类的中心
-    double Distance(int,int);
+    //double Distance(int,int);
 
     public:
+    int Cluster_Num;//类的个数
+    int Point_Num;//点的个数
+    int Point_Dimension;//样本属性维度
     int Slave_Num;//确定分片数目
     bool ReadData();//读取初始数据
     bool SplitData();//点数据分片存储
@@ -43,7 +46,7 @@ class D_K_Means
 
     int Get_Cluster_Num();
 };
-
+/*
 double D_K_Means::Distance(int p,int c)//编号为p的点与第c类的中心的距离
 {
     double dis=0;
@@ -53,7 +56,7 @@ double D_K_Means::Distance(int p,int c)//编号为p的点与第c类的中心的�
     }
     return sqrt(dis);
 }
-
+*/
 bool D_K_Means::SplitData(){
     //确定分片数目
     double n = (double)Point_Num;
@@ -133,16 +136,7 @@ bool D_K_Means::TempWrit()//将所有类的中心写入临时文件
         ifstream infile;
         infile.open(filename);
         if(!infile){
-            //第一次
-            /*
-            std::cout << "tempdata_"<<i<<" not exist..."<<std::endl;
-            memset(TempCluster[i].Center,0,sizeof(TempCluster[i].Center));
-            for(int j = 0;j < Point_Dimension;j++){
-                double temperr = TempCluster[i].Center[j] - Cluster[i].Center[j];
-                ERR += (TempCluster[i].Center[j]-Cluster[i].Center[j])*(TempCluster[i].Center[j]-Cluster[i].Center[j]);
-                goto Writetemp;
-            
-            }*/
+            //第一次执行TempWrit函数
         }else{
             double tempdata;
             for(int i = 0;i < Cluster_Num;i++){
@@ -215,12 +209,19 @@ int FrameWork(D_K_Means *kmeans)
     kmeans->Slave_Num = 4;
     std::cout << "master has cluster number = "<< kmeans->Slave_Num<<std::endl;
     while(converged == false){
-        for(int i = 0; i < kmeans->Slave_Num;i++){
-            std::string number = std::to_string(i);
-            const char* con_number = number.c_str();
+        for(int index = 0; index < kmeans->Slave_Num;index++){
             std::string command = "./slave ";
-            command += number;
-            std::cout << i<< " slave start success..."<<std::endl;
+            std::string number = std::to_string(kmeans->Cluster_Num);
+            command += " ";command += number;//CLuster_Num
+            number = std::to_string(kmeans->Point_Num);
+            command += " ";command += number;//Point_Num
+            number = std::to_string(kmeans->Point_Dimension);
+            command += " ";command += number;//Point_Dimension
+            number = std::to_string(kmeans->Slave_Num);
+            command += " ";command += number;//Slave_Num
+            number = std::to_string(index);
+            command += " ";command += number;//index
+            std::cout << index << " slave start success..."<<std::endl;
             system(command.c_str());
         }
         sleep(2);
