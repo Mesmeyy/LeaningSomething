@@ -34,7 +34,9 @@ class D_K_Means
     double Distance(int,int);
 
     public:
+    int Slave_Num;//确定分片数目
     bool ReadData();//读取初始数据
+    bool SplitData();//点数据分片存储
     int Init();//初始化K类的中心
     bool TempWrit();//将一轮迭代结束后的结果写入临时文件
     int Write_Result();//输出结果
@@ -52,6 +54,31 @@ double D_K_Means::Distance(int p,int c)//编号为p的点与第c类的中心的�
     return sqrt(dis);
 }
 
+bool D_K_Means::SplitData(){
+    //确定分片数目
+    double n = (double)Point_Num;
+    int every_points = ceil(n/Slave_Num);//除最后一片，每片拿走every_points个数
+    std::cout << "There are "<< every_points <<"points in one split..."<<std::endl;
+    int count = 0;
+    for(int i = 0;i < Slave_Num;i++){
+        std::string number = std::to_string(i);
+        std::string filename = "data_";
+        filename += number;
+        filename += ".txt";
+        ofstream outfile;
+        outfile.open(filename);
+        std::cout << "In split there is creating filename = " << filename << std::endl;
+        while(1){
+            for(int j = 0;j < Point_Dimension;j++) {
+                outfile << Point[count][j];
+                outfile << " ";
+            }
+            count ++;
+            if(!(count % every_points)) break;//满足一个完整的split的数据个数
+            if(count == Point_Num) break;//所有点都划分完毕
+        }
+    }
+}
 bool D_K_Means::ReadData()//读取数据
 {
     ifstream infile;
@@ -94,8 +121,11 @@ int D_K_Means::Init()//初始化K个类的中心
 bool D_K_Means::TempWrit()//将所有类的中心写入临时文件
 {
     double ERR=0.0;
-    //tempdata文件要么不存在，要么已经由各个slave计算并保存于文件，因此，这里使用读文件方式读取tempdata里面已经计算出来的最新的中心值
-    for(int i = 0 ; i < Cluster_Num;i++){
+    for(int i = 0;i < Cluster_Num;i++){
+        memset(TempCluster[i].Center,0,sizeof(TempCluster[i].Center));
+    }
+    //tempdata,存放各个slave计算出来的中心值文件要么不存在，要么已经由各个slave计算并保存于文件，因此，这里使用读文件方式读取tempdata里面已经计算出来的最新的中心值
+    for(int i = 0 ; i < Slave_Num;i++){
         std::string filename = "tempdata_";
         std::string number = std::to_string(i);
         filename += number;
@@ -103,21 +133,33 @@ bool D_K_Means::TempWrit()//将所有类的中心写入临时文件
         ifstream infile;
         infile.open(filename);
         if(!infile){
+            //第一次
+            /*
             std::cout << "tempdata_"<<i<<" not exist..."<<std::endl;
             memset(TempCluster[i].Center,0,sizeof(TempCluster[i].Center));
             for(int j = 0;j < Point_Dimension;j++){
                 double temperr = TempCluster[i].Center[j] - Cluster[i].Center[j];
                 ERR += (TempCluster[i].Center[j]-Cluster[i].Center[j])*(TempCluster[i].Center[j]-Cluster[i].Center[j]);
                 goto Writetemp;
-            }
+            
+            }*/
         }else{
-            std::cout << "tempdata_"<<i<<" exist"<<std::endl;
-            for(int j = 0;j < Point_Dimension;j++){
-                infile >> TempCluster[i].Center[j];
+            double tempdata;
+            for(int i = 0;i < Cluster_Num;i++){
+                for(int j = 0;j < Point_Dimension;j++){
+                    infile >> tempdata;
+                    TempCluster[i].Center[j] += tempdata;
+                }
             }
         }
     }
-    for(int i=0;i<Cluster_Num;i++)//将TempCluster的中心坐标复制到Cluster中，同时计算与上一次迭代的变化（取2范数的平方）
+    //汇聚各个Slave后求平均中心值就是TempCluster最新值
+    for(int i = 0;i < Cluster_Num;i++){
+        for(int j = 0;j < Point_Dimension;j++){
+            TempCluster[i].Center[j] /= Slave_Num;
+        }
+    }
+    for(int i=0;i<Cluster_Num;i++)//更新Cluster.Center同时计算与上一次迭代的变化（取2范数的平方）
     {
         for(int j=0;j<Point_Dimension;j++)
         {
@@ -128,10 +170,7 @@ bool D_K_Means::TempWrit()//将所有类的中心写入临时文件
     }
 Writetemp:
     for(int i = 0;i < Cluster_Num;i++){
-        std::string number = std::to_string(i);
-        std::string filename = "tempdata_";
-        filename += number;
-        filename += ".txt";
+        std::string filename = "tempcenter.txt";//把新得到的center放入
         ofstream outfile;
         outfile.open(filename);
         for(int j = 0;j < Point_Dimension;j++){
@@ -166,15 +205,17 @@ int D_K_Means::Get_Cluster_Num()
 {
     return Cluster_Num;
 }
+
 int FrameWork(D_K_Means *kmeans)
 {
     bool converged = false;
     int times = 1;
     kmeans->ReadData();
-    int slave_number = kmeans -> Get_Cluster_Num();
-    std::cout << "master has cluster number = "<< slave_number<<std::endl;
+    kmeans->SplitData();
+    kmeans->Slave_Num = 4;
+    std::cout << "master has cluster number = "<< kmeans->Slave_Num<<std::endl;
     while(converged == false){
-        for(int i = 0; i < slave_number;i++){
+        for(int i = 0; i < kmeans->Slave_Num;i++){
             std::string number = std::to_string(i);
             const char* con_number = number.c_str();
             std::string command = "./slave ";
@@ -197,3 +238,8 @@ int main(int argc, char *argv[])
     return 0;
 }
 
+/*分布式实现思路
+1 按照文件分片运行Mapper()和Combiner()
+2 在指定的几个机器上运行Reducer()，一个reduce计算一个或者多个聚类中心，得到新的聚类中心和ERR
+3 Reducer结果通过TempWrit返回到master节点，进行ERR汇总，然后下发，进行下一次迭代
+*/
