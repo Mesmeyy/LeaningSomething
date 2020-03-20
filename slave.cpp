@@ -17,9 +17,9 @@
 using namespace std;
 
 const double INF= 1e20;//精细度
-const int MAXD = 1000;
-const int MAXN = 1000;
-const int MAXC = 50;
+const int MAXD = 1000;//维度
+const int MAXN = 1000;//点数目
+const int MAXC = 50;//Cluster类别数
 
 struct aCluster
 {
@@ -30,95 +30,119 @@ struct aCluster
 };
 class S_Kmeans{
     private:
-    int Cluster_Index = -1;//该类的编号
-    double Point[MAXN][MAXD];//slave必须要保存所有的数值
-    struct aCluster Slave_Acluster;//该slave独有的一个Cluster_Num
-    struct aCluster All_Cluster[MAXN];
-    int Point_Num = 0;//样本数
-    int Point_Dimension = 0;//样本属性维度
-    int Cluster_Num = 0;
-    double Tempcenter[MAXD];
-
+    double Point[MAXN][MAXD];//slave必须要保存所有它拥有的点的所有数值
+    struct aCluster All_Cluster[MAXN];//中心集合
+    int Belong[MAXN];//该点属于的类的下标
+    double Point_Distance[MAXN];//该点到所有类的最小距离
 
     public:
-    int Set_Cluster_Index(int a);//设置该类的下标
-    int Get_Cluster_Index();//获取该类的下标
+    int Cluster_Num;//类的个数
+    int Point_Num;//样本数
+    int Point_Dimension;//样本属性维度
+    int Slave_Num;//分片数目
+    int Slave_Index;//该分片序号
+    int Slave_Point_Num;//该分片拥有的点数目
+    bool Init();
     bool ReadData();//读取全部的样本点
     int Mapper();//进行分片计算
-    double Distance(int index,int j);//根据样本下表计算该样本距离j类中心的距离
-    int Combiner();//汇总该中心的各个维度总距离
+    double Distance(int index,int j);//根据样本下标计算该样本距离j类中心的距离
+    int Combiner();//求分片的各个cluster的聚类中心
     int Reducer();//求该类各个维度的中心值
 };
-int S_Kmeans::Set_Cluster_Index(int a)
+bool S_Kmeans::Init()
 {
-    Cluster_Index = a;
-    return 0;
-}
-int S_Kmeans::Get_Cluster_Index()
-{
-    return Cluster_Index;
+    double n = (double)Point_Num;
+    int every_points = ceil(n/Slave_Num);
+    if(!(Point_Num % Slave_Num) || Slave_Index != (Slave_Num - 1)){
+        Slave_Point_Num = every_points;
+    }
+    else if((Point_Num % Slave_Num )&&(Slave_Index == (Slave_Num -1))){
+        Slave_Point_Num = Point_Num - (Slave_Index * every_points);
+    }
+    else{
+        std::cout << "Init error ..." << std::endl;
+    }
+    std::cout << "This slave has " << Slave_Point_Num << "points ..." << std::endl;
+    memset(Belong,0,sizeof(int)*MAXN);
+    memset(Point_Distance,0,sizeof(double)*MAXN);
+
+    for(int i = 0; i < Cluster_Num;i++){
+        All_Cluster[i].Number = 0;
+        memset(All_Cluster[i].Member,0,sizeof(All_Cluster[i].Member));
+    }
+    return true;
 }
 bool S_Kmeans::ReadData()
 {
+    //读取本split数据
+    std::string filename = "splitdata_";
+    std::string number = std::to_string(Slave_Index);
+    filename += number;
+    filename += ".txt";
     ifstream infile;
-    infile.open("data.txt");
-    infile >> Point_Num;
-    infile >> Point_Dimension;
-    infile >> Cluster_Num;
-    for(int i = 0;i < Point_Num;i++){
+    infile.open(filename);
+    for(int i = 0;i < Slave_Point_Num;i++){
         for(int j = 0;j < Point_Dimension;j++){
             infile >> Point[i][j];
         }
     }
     infile.close();
-    std::cout << "read data.txt form this slave is ok..."<<std::endl;
-    //每一个slave都需要知道其他slave的中心值才能得知它到样本点是否最小
+    std::cout << "slave"<< Slave_Index <<": read "<< filename <<" is ok..."<<std::endl;
+    //读取tempcenter所有中心值
+    filename = "tempcenter.txt";
+    infile.open(filename);
     for(int i = 0;i < Cluster_Num;i++){
-        std::string number = std::to_string(i);
-        std::string filename = "tempdata_";
-        filename += number;
-        filename += ".txt";
-        ifstream infile;
-        infile.open(filename);
         for(int j = 0;j < Point_Dimension;j++){
             infile >> All_Cluster[i].Center[j];
         }
     }
-    //slave不需要把数据写入其中，但是他需要从属于它的tempdata里面读取center
+    infile.close();
     return true;
 }
-
 int S_Kmeans::Mapper()
-{
-    std::string filename = "tempdata_";
-    std::string number = std::to_string(Cluster_Index);
-    filename += number;
-    filename += ".txt";
-    ifstream infile;
-    infile.open(filename);
-    double temp;
-    Slave_Acluster.Number = 0;
-    for(int j = 0;j < Point_Dimension;j++){//读取中心
-        infile >> temp;
-        Slave_Acluster.Center[j] = temp;
-    }
-    for(int i = 0;i < Point_Num;i++){
-        int index = 0;
-        double dis = INF;//这里有问题，不应该每次都是INF,应该记录每个point的最小值
-        for(int j = 0;j < Cluster_Num;j++){
+{   
+    std:cout << "This is Mapper ..." << std::endl;
+    //计算本split数据到所有中心的最小距离及属于哪一类
+    for(int i = 0;i < Slave_Point_Num;i++){
+        int index = -1;
+        double dis = INF;
+        int j;
+        for(j = 0;j < Cluster_Num;j++){
             if(Distance(i,j) < dis){
                 dis = Distance(i,j);
                 index = j;
             }
         }
-        if(index == Cluster_Index){//这里将来可以改成libprocess通信，直接将坐标发送给对应额cluster就不用再计算了,但是也还是会重复计算Distance
-            Slave_Acluster.Member[Slave_Acluster.Number++] = i;
-            std::cout << "Point " << i << " belong to " << Cluster_Index << " ... " << std::endl;
-        }
+        //找到最小点后对号入座
+        Belong[i] = j;
+        Point_Distance[i] = dis;
+        All_Cluster[j].Member[All_Cluster[j].Number++] = i;
     }
+    //现在所有的点都找到了自己属于哪个类
+    std::cout << "Mapper over ..."<<std::endl;
     return 0;
 }
-
+int S_Kmeans::Combiner()
+{
+    std::cout << "This is Combiner ..." << std::endl;
+    for(int i = 0;i < Cluster_Num;i++){
+        memset(All_Cluster[i].Center,0,sizeof(double)*MAXD);
+        //对所有属于它的点对应维度距离相加
+        for(int j = 0;j < All_Cluster[i].Number;j++){
+            for(int k = 0;k < Point_Dimension;k++){
+                All_Cluster[i].Center[k] += Point[All_Cluster[i].Member[j]][k];
+            }
+        }
+        int number = All_Cluster[i].Number;
+        if(number == 0) continue;//没有点属于该类
+        //求该cluster的平均中点值
+        for(int j = 0;j < Point_Dimension;j++){
+            All_Cluster[i].Center[j] /= number;
+        }
+    }
+    std::cout << "Combiner over ..." << std::endl;
+    return 0;
+}
 double S_Kmeans::Distance(int p,int c)
 {
     double dis = 0.0;
@@ -128,32 +152,22 @@ double S_Kmeans::Distance(int p,int c)
     return sqrt(dis);
 }
 
-int S_Kmeans::Combiner()
-{
-    memset(Tempcenter,0,sizeof(Tempcenter));
-    for(int k = 0;k < Point_Dimension;k++){
-        for(int j = 0 ;j < Slave_Acluster.Number;j++){
-            Tempcenter[k] += Point[j][k];
-        }
-    }
-    return 0;
-}
-
 int S_Kmeans::Reducer()
 {
-    for(int i = 0;i < Point_Dimension;i++){
-        Tempcenter[i] /= Slave_Acluster.Number;
-    }
+    std::cout << "This is Reducer ..."<<std::endl;
     std::string filename = "tempdata_";
-    std::string number = std::to_string(Cluster_Index);
+    std::string number = std::to_string(Slave_Index);
     filename += number;
     filename += ".txt";
     ofstream outfile;
     outfile.open(filename);
-    for(int i = 0;i < Point_Dimension;i++){
-        outfile << Tempcenter[i];
-        outfile << " ";
+    for(int i = 0;i < Cluster_Num;i++){
+        for(int j = 0;j < Point_Dimension;j++){
+            outfile << All_Cluster[i].Center[j];
+            outfile << " ";
+        }
     }
+    std::cout << "Reducer over ..."<<std::endl;
     return 0;
 }
 
@@ -162,13 +176,21 @@ int main(int argc,char* argv[])
     for(int i = 0;i < argc;i++){
         std::cout << "param "<< i << " = "<<argv[i] << std::endl;
     }
-    std::cout << "This is the " << argv[1] << " th slave..."<<std::endl;
-    S_Kmeans *skmeans = new S_Kmeans();
-    skmeans -> Set_Cluster_Index(atoi(argv[1]));
-    std::cout << "Cluster_Index = " << skmeans -> Get_Cluster_Index() << std::endl;
-    skmeans -> ReadData();
-    skmeans -> Mapper();
-    skmeans -> Combiner();
-    skmeans -> Reducer();
+    S_Kmeans *kmeans = new S_Kmeans();
+    kmeans->Cluster_Num = atoi(argv[1]);
+    kmeans->Point_Num = atoi(argv[2]);
+    kmeans->Point_Dimension = atoi(argv[3]);
+    kmeans->Slave_Num = atoi(argv[4]);
+    kmeans->Slave_Index = atoi(argv[5]);
+    std::cout << "Slave Cluster_Num = " << kmeans->Cluster_Num << std::endl;
+    std::cout << "Slave Point_Num = " << kmeans->Point_Num << std::endl;
+    std::cout << "Slave Point_Dimension = " << kmeans->Point_Dimension << std::endl;
+    std::cout << "Slave Slave_Num = " << kmeans->Slave_Num << std::endl;
+    std::cout << "Slave Slave_Index = " << kmeans->Slave_Index << std::endl;
+    kmeans -> Init();
+    kmeans -> ReadData();
+    kmeans -> Mapper();
+    kmeans -> Combiner();
+    kmeans -> Reducer();
     return 0;
 }
