@@ -22,15 +22,43 @@ a. 	thrust::device_vector<double> *data[1];
 b. 	thrust::device_vector<double> *data[1];
 	double dataset[] = ...;
 	data[0] = new thrust::device_vector<double>(dataset,dateset+p);//p是dataset的最大偏移量
+device_vector创建二维数组data[5][10]的方式:
+	thrust::device_vector<double> *data[5];//(只要这个数组大于1就行)
+	for(int i = 0;i < 5;i++){
+		data[i] = new thrust::device_vector<double>(10);
+	}
 
 
 Thrust官方使用介绍:https://docs.nvidia.com/cuda/thrust/
+其他API用法
+填充：thrust :: fill ( dev_ptr , dev_ptr + N, ( int ) 0);
+获取设备指针：thrust :: device_ptr <int > dev_ptr = thrust :: device_malloc <int >(N); 	
+		int * raw_ptr = thrust :: raw_pointer_cast ( dev_ptr ); 
+
 
 获取本机可用的GPU个数:
 	int count;
 	cudaGetDeviceCount(&count);
 
+绑定GPU，默认是0号GPU：这里的绑定不是说本程序必须要在哪个GPU上执行，而是说某一GPu可以运行该程序。
+	int index = 1;
+	cudaSetDevice(index);
 
+
+Async类函数和非Async类函数的区别在于异步，是指定了流拷贝的。
+一些计算能力为2.x或更高的设备可以将锁页内存到设备内存的数据传输和设备内存到锁页内存的数据传输并行执行。
+应用程序可检查设备属性中的asyncEngineCount项来确定这一功能的支持程度，等于2时表示支持。
+应用程序通过流来管理并行。一个流是一个顺次执行的命令序列。不同的流之间并行执行，没有固定的执行顺序。
+流的创建与销毁：
+	cudaStream_t stream[2];  
+	for (int i = 0; i < 2; ++i)  
+    		cudaStreamCreate(&stream[i]); 
+	for (int i = 0; i < 2; ++i)  
+    		cudaStreamDestroy(stream[i]);  
+流的拷贝：
+	cudaMemcpyAsync(inputDevPtr + i * size, hostPtr + i * size, size, cudaMemcpyHostToDevice, stream[i]);  
+	cudaMemcpyAsync(hostPtr + i * size, outputDevPtr + i * size, size, cudaMemcpyDeviceToHost, stream[i]);
+ 
 
 
 
