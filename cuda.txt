@@ -1,0 +1,2 @@
+cuda_Event_t :cuda获得时间戳函数
+cudaEventSynchronize:细粒度等待所有线程任务完成
