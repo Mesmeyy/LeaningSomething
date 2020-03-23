@@ -16,8 +16,21 @@ Thrust并不是传统意义上的函数库，因为它的所有内容都在所包含的头文件中。
 
 #include <thrust/host_vector.h>
 #include <thrust/device_vector.h>:可以直接在GPU中创建对象,直接使用GPU
+device_vector的创建一维数组的方式:
+a. 	thrust::device_vector<double> *data[1];
+   	data[0] = new thrust::device_vector<double> (n);//开辟大小是n的设备数组
+b. 	thrust::device_vector<double> *data[1];
+	double dataset[] = ...;
+	data[0] = new thrust::device_vector<double>(dataset,dateset+p);//p是dataset的最大偏移量
+
 
 Thrust官方使用介绍:https://docs.nvidia.com/cuda/thrust/
+
+获取本机可用的GPU个数:
+	int count;
+	cudaGetDeviceCount(&count);
+
+
 
 
 
