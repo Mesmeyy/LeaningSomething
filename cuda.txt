@@ -12,8 +12,7 @@ Thrust的最主要特征是实现了几种数据结构和算法的高速并行计算（high performance het
 
 Thrust提供了大量的函数类型集合，包括：转换(transformation)，规约(reduction)，前缀求和(prefix sum)，再排序(reordering)，排序(sorting)。
 Thrust并不是传统意义上的函数库，因为它的所有内容都在所包含的头文件中。
-因此，要避免包含所有的文件。只要包含需要的头文件就行了。
-
+因此，要避免包含所有的文件。只要包含需要的头文件就行了。Thrust官方使用介绍:https://docs.nvidia.com/cuda/thrust/
 #include <thrust/host_vector.h>
 #include <thrust/device_vector.h>:可以直接在GPU中创建对象,直接使用GPU
 device_vector的创建一维数组的方式:
@@ -29,20 +28,32 @@ device_vector创建二维数组data[5][10]的方式:
 	}
 
 
-Thrust官方使用介绍:https://docs.nvidia.com/cuda/thrust/
-其他API用法
+其他API用法:
 填充：thrust :: fill ( dev_ptr , dev_ptr + N, ( int ) 0);
 获取设备指针：thrust :: device_ptr <int > dev_ptr = thrust :: device_malloc <int >(N); 	
 		int * raw_ptr = thrust :: raw_pointer_cast ( dev_ptr ); 
+排序:	int A[N] = {1, 4, 2, 8, 5, 7};
+	thrust::sort(A, A + N);
+	int    keys[N] = {  1,   4,   2,   8,   5,   7};
+	char values[N] = {'a', 'b', 'c', 'd', 'e', 'f'};//也能对cpu排序
+	thrust::sort_by_key(keys, keys + N, values);//默认由小到大
+	thrust::stable_sort(A, A + N, thrust::greater<int>());//由大到小
+加和: thrust::reduce_by_key == cub::DeviceReduce::ReduceByKey ;
+CUB库的使用:https://nvlabs.github.io/cub/structcub_1_1_device_reduce.html
 
+多个CUDA库共享的数据类型，定义在library_types.h头文件中
+cublasHandle_t, 一个指针类型，指向一个不透明的结构可以c维持cuBLAS库环境，这个环境需要使用cublasCreate()进行初始化，返回的句柄也必须传为接下来的库函数的调用中，环境在结束时使用cublasDestroy()销毁
+cublasStatust,一个函数状态的返回类型，cuBLAS库函数返回其状态，状态值有很多，常见的，CUBLAS_STATUS_SUCCESS, CUBLAS_STATUS_NOT_INIYIALIZED,edc.
 
 获取本机可用的GPU个数:
 	int count;
 	cudaGetDeviceCount(&count);
-
-绑定GPU，默认是0号GPU：这里的绑定不是说本程序必须要在哪个GPU上执行，而是说某一GPu可以运行该程序。
-	int index = 1;
-	cudaSetDevice(index);
+获取本设备信息:
+	int dev_num;
+	cudaGetDevice(&dev_num);
+设置下文设备:绑定GPU，默认是0号GPU：这里的绑定不是说本程序必须要在哪个GPU上执行，而是说某一GPu可以运行该程序
+	int dev_num = 0;
+	cudaSetDevice(dev_num);
 
 
 Async类函数和非Async类函数的区别在于异步，是指定了流拷贝的。
@@ -60,6 +71,15 @@ Async类函数和非Async类函数的区别在于异步，是指定了流拷贝的。
 	cudaMemcpyAsync(hostPtr + i * size, outputDevPtr + i * size, size, cudaMemcpyDeviceToHost, stream[i]);
  
 
+cudaDeviceSynchronize() 会阻塞当前程序的执行，直到所有任务都处理完毕（这里的任务其实就是指的是所有的线程都已经执行完了kernel function）
+cudaThreadSynchronize()的功能和cudaDeviceSynchronize()基本上一样，这个函数在新版本的cuda中已经被“废弃”了，不推荐使用，如果程序中真的需要做同步操作，推荐使用cudaDeviceSynchronize()
+cudaStreamSynchronize()和上面的两个函数类似，这个函数带有一个参数，cuda流ID，它只阻塞那些cuda流ID等于参数中指定ID的那些cuda例程，对于那些流ID不等的例程，还是异步执行的。
 
-
+CUDA atomic原子操作:
+a. atomicAdd族：
+	int atomicAdd(int* address, int val);
+	unsigned int atomicAdd(unsigned int* address,unsigned int val);
+	unsigned long long int atomicAdd(unsigned long long int* address,unsigned long long int val);
+b. atomicSub族：
+	
 
