@@ -81,5 +81,34 @@ a. atomicAdd族：
 	unsigned int atomicAdd(unsigned int* address,unsigned int val);
 	unsigned long long int atomicAdd(unsigned long long int* address,unsigned long long int val);
 b. atomicSub族：
+	int atomicSub(int* address, int val);
+	unsigned int atomicSub(unsigned int* address, unsigned int val
+c. atomicExch族：读取位于全局或共享存储器中地址address 处的32 位或64 位字old，并将val 存储在存储器的同一地址中。这两项操作在一次原子事务中执行。该函数将返回old。只有全局存储器支持64 位字
+	int atomicExch(int* address, int val);
+
+	unsigned int atomicExch(unsigned int* address,unsigned int val);
 	
+unsigned long long int atomicExch(unsigned long long int* address,unsigned long long int val);
+
+	float atomicExch(float* address, float val);
+d. atomicMin族：读取位于全局或共享存储器中地址address 处的32 位字old，计算old 和val 的最小值，并将结果存储在存储器的同一地址中。这三项操作在一次原子事务中执行。该函数将返回old
+	int atomicMin(int* address, int val);
+	unsigned int atomicMin(unsigned int* address,unsigned int val);
+e. atomicMax族：
+	int atomicMax(int* address, int val);
+	unsigned int atomicMax(unsigned int* address,unsigned int val);
+
+f.还有不常用的atomic系列函数，见网址:https://blog.csdn.net/dcrmg/article/details/54959306
+
+__device __forceline__ void func();//forceline自动内联这些设备的功能
+
+__double_as__longlong诸如此类型 属于CUDA语法中的精度转换
+
+
+
+
+
+
+
+
 
