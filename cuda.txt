@@ -3,7 +3,8 @@
 
 cuda_Event_t :cuda获得时间戳函数
 
-cudaEventSynchronize:细粒度等待所有线程任务完成
+
+
 
 Thrust开源库的简介是“code at speed of light”。光速代码的实现听上去太过夸张，但是thrust在cuda硬件加速中确实有着无比强大的功能。
 Thrust是并行算法和数据结构的基于GPU CUDA的C++库。Thrust主要通过管理系统底层的功能比如memory access（内存获取）和memory allocation（内存分配）来实现加速，使得工程师们在GPU编程的环境下能更focus在算法的设计上。
@@ -70,7 +71,7 @@ Async类函数和非Async类函数的区别在于异步，是指定了流拷贝的。
 	cudaMemcpyAsync(inputDevPtr + i * size, hostPtr + i * size, size, cudaMemcpyHostToDevice, stream[i]);  
 	cudaMemcpyAsync(hostPtr + i * size, outputDevPtr + i * size, size, cudaMemcpyDeviceToHost, stream[i]);
  
-
+cudaEventSynchronize:细粒度等待所有线程任务完成
 cudaDeviceSynchronize() 会阻塞当前程序的执行，直到所有任务都处理完毕（这里的任务其实就是指的是所有的线程都已经执行完了kernel function）
 cudaThreadSynchronize()的功能和cudaDeviceSynchronize()基本上一样，这个函数在新版本的cuda中已经被“废弃”了，不推荐使用，如果程序中真的需要做同步操作，推荐使用cudaDeviceSynchronize()
 cudaStreamSynchronize()和上面的两个函数类似，这个函数带有一个参数，cuda流ID，它只阻塞那些cuda流ID等于参数中指定ID的那些cuda例程，对于那些流ID不等的例程，还是异步执行的。
@@ -106,7 +107,40 @@ __double_as__longlong诸如此类型 属于CUDA语法中的精度转换
 
 
 
+prime-select query
+prime-select nvidia
+reboot 
 
+还有一种办法:
+apt update
+apt upgrade
+reboot
+
+原因:nvidia驱动有问题
+
+驱动安装完成会出现:
+Driver:   Installed
+Toolkit:  Installed in /usr/local/cuda-10.1/
+Samples:  Installed in /root/, but missing recommended libraries
+
+Please make sure that
+ -   PATH includes /usr/local/cuda-10.1/bin
+ -   LD_LIBRARY_PATH includes /usr/local/cuda-10.1/lib64, or, add /usr/local/cuda-10.1/lib64 to /etc/ld.so.conf and run ldconfig as root
+
+To uninstall the CUDA Toolkit, run cuda-uninstaller in /usr/local/cuda-10.1/bin
+To uninstall the NVIDIA Driver, run nvidia-uninstall
+
+Please see CUDA_Installation_Guide_Linux.pdf in /usr/local/cuda-10.1/doc/pdf for detailed information on setting up CUDA.
+Logfile is /var/log/cuda-installer.log
+
+
+
+cudaError_t cudaStatus = cudaGetLastError();
+    if (cudaStatus != cudaSuccess){
+    	fprintf(stderr, "addKernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
+    }
+出现：
+addKernel launch failed: invalid configuration argument 核数目超过限制，可见cuda不能自动屏蔽核结构，即一个block(512,512,512)不可以
 
 
 
